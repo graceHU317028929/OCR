@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="aocr.xsl"?>
+<asprise-ocr input="/Users/hxp/Documents/workspace/OCR/1.jpg" time-start="2016-05-26 09:06:41 +0800" version-format="15" runtime="Asprise OCR 15.3 - Evaluation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://asprise.com/ocr/files/schema/15/aocr.xsd">
+  <page no="0" width="1652" height="2338" words="0" confidence="0" time-taken="1.048">
+ <table id="2" x="251" y="201" width="1152" height="1873" rows="5" cols="2" cells="10" words="9" confidence="87">
+  <cell id="1" x="251" y="201" width="768" height="385" row="0" col="0" rowspan="1" colspan="1">
+    <block id="d" type="text" subtype="word" x="270" y="214" width="13" height="22" words="1" confidence="93" font-name="Courier_New_Bold" font-size="32" font-bold="1" font-italic="0" font-serif="1" baseline="236" xheight="15" ascent="7" descent="-7">1</block>
+  </cell>
+  <cell id="3" x="1019" y="201" width="384" height="385" row="0" col="1" rowspan="1" colspan="1">
+    <block id="e" type="text" subtype="word" x="1036" y="220" width="96" height="16" words="1" confidence="89" font-name="Verdana" font-size="23" font-bold="0" font-italic="0" font-serif="0" baseline="236" xheight="11" ascent="5" descent="-5">answer</block>
+  </cell>
+  <cell id="4" x="251" y="586" width="768" height="385" row="1" col="0" rowspan="1" colspan="1">
+    <block id="f" type="text" subtype="word" x="269" y="600" width="14" height="22" words="1" confidence="97" font-name="Trebuchet_MS" font-size="32" font-bold="0" font-italic="0" font-serif="0" baseline="622" xheight="15" ascent="7" descent="-7">2</block>
+  </cell>
+  <cell id="5" x="1019" y="586" width="384" height="385" row="1" col="1" rowspan="1" colspan="1">
+    <block id="10" type="text" subtype="word" x="1036" y="606" width="97" height="16" words="1" confidence="91" font-name="Verdana" font-size="23" font-bold="0" font-italic="0" font-serif="0" baseline="622" xheight="11" ascent="5" descent="-5">answer</block>
+  </cell>
+  <cell id="6" x="251" y="971" width="768" height="386" row="2" col="0" rowspan="1" colspan="1">
+    <block id="11" type="text" subtype="word" x="269" y="985" width="14" height="22" words="1" confidence="91" font-name="Verdana" font-size="32" font-bold="0" font-italic="0" font-serif="0" baseline="1007" xheight="15" ascent="7" descent="-7">3</block>
+  </cell>
+  <cell id="7" x="1019" y="971" width="384" height="386" row="2" col="1" rowspan="1" colspan="1">
+    <block id="12" type="text" subtype="word" x="1036" y="991" width="97" height="16" words="1" confidence="80" font-name="Verdana" font-size="23" font-bold="0" font-italic="0" font-serif="0" baseline="1007" xheight="11" ascent="5" descent="-5">answer</block>
+  </cell>
+  <cell id="8" x="251" y="1357" width="768" height="385" row="3" col="0" rowspan="1" colspan="1">
+    <block id="13" type="text" subtype="word" x="268" y="1370" width="16" height="22" words="1" confidence="94" font-name="Georgia_Bold" font-size="34" font-bold="1" font-italic="0" font-serif="1" baseline="1387" xheight="18" ascent="9" descent="-6">4</block>
+  </cell>
+  <cell id="9" x="1019" y="1357" width="384" height="385" row="3" col="1" rowspan="1" colspan="1">
+    <block id="14" type="text" subtype="word" x="1036" y="1376" width="96" height="16" words="1" confidence="79" font-name="Verdana" font-size="23" font-bold="0" font-italic="0" font-serif="0" baseline="1392" xheight="11" ascent="5" descent="-5">answer</block>
+  </cell>
+  <cell id="a" x="251" y="1742" width="768" height="332" row="4" col="0" rowspan="1" colspan="1">
+    <block id="15" type="text" subtype="word" x="269" y="1756" width="14" height="22" words="1" confidence="89" font-name="Verdana_Bold" font-size="32" font-bold="1" font-italic="0" font-serif="0" baseline="1778" xheight="15" ascent="7" descent="-7">5</block>
+  </cell>
+  <cell id="b" x="1019" y="1742" width="384" height="332" row="4" col="1" rowspan="1" colspan="1">
+  </cell>
+ </table>
+  </page>
+</asprise-ocr>
