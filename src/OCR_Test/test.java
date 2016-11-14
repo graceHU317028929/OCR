@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.imageio.stream.ImageInputStream;
@@ -94,14 +93,8 @@ String s = test.startOCR();
 		// TODO Auto-generated method stub 
     	
     	
-		return null;
 	}
 
-	public void runSample(int num){
-    	if(num == 2){
-    		
-    	}
-    }
 
   /**
    * start OCR
