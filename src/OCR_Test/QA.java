@@ -11,6 +11,7 @@ public class QA {
 	private TableCell question;
 	private TableCell answerbox;
 	
+	
 	public void setAnswerbox(TableCell answerbox) {
 		this.answerbox = answerbox;
 	}

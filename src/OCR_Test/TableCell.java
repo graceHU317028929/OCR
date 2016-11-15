@@ -5,6 +5,7 @@ public class TableCell {
 	private int y;
 	private int width;
 	private int height;
+	private String name;
 	
 	public TableCell(){
 	}
@@ -31,5 +32,11 @@ public class TableCell {
 	}
 	public void setHeight(int height){
 		this.height = height;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getName() {
+		return name;
 	}
 }
