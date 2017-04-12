@@ -1,0 +1,14 @@
+#Fat Jar Configuration File
+#Thu Mar 02 20:51:57 HKT 2017
+onejar.license.required=false
+manifest.classpath=
+manifest.removesigners=true
+onejar.checkbox=true
+jarname=/Users/hxp/Dropbox/dissertation/recognize tool/ocr2.0.jar
+manifest.mergeall=true
+manifest.mainclass=OCR_Test.UIframe
+manifest.file=<createnew>
+jarname.isextern=true
+onejar.expand=
+excludes=
+includes=

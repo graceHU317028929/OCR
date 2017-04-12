@@ -10,8 +10,15 @@ public class QA {
 	
 	private TableCell question;
 	private TableCell answerbox;
+	private TableCell choice;
 	
 	
+	public TableCell getChoice() {
+		return choice;
+	}
+	public void setChoice(TableCell choice) {
+		this.choice = choice;
+	}
 	public void setAnswerbox(TableCell answerbox) {
 		this.answerbox = answerbox;
 	}

@@ -1,20 +1,36 @@
 package OCR_Test;
 
 import com.asprise.ocr.Ocr;
+
+import net.sourceforge.tess4j.TesseractException;
+import problemtype.ApplicationQestion;
+import problemtype.Choice;
+import problemtype.MultipleCompletion;
+import problemtype.SingleCompletion;
+
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.imageio.stream.ImageInputStream;
 
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -30,114 +46,157 @@ public class Test {
 	private String gap_y = "y=\"|\" width=";
 	private String gap_width = "width=\"|\" height=";
 	private String gap_height = "height=\"|\" row=|\" words=";
+	private String except = "</table>";
+	private String type = "";
+	public static String SINGLE_COMPLETION = "Single Completion";
+	public static String MULTI_COMPLETION = "Multiple Completion";
+	public static String HORIZONTAL = "Horizontal";
+	public static String VERTICAL = "Vertical";
+	//public static String CALCULATION ="Calculation";
+	public static String APPLICATION = "Application Question";
+	public static String CHOICE="Choice";
+	//定义三类题型
+	//private Calculation calculation;
+	private ApplicationQestion application;
+	private SingleCompletion singleCompletion;
+	private MultipleCompletion multipleCompletion;
+	private Choice choice;
 
-	// 源图片路径名称。如：c:\\1.jpg
-	private String srcpath = "1.jpg";
-	// 剪切图片存放路径名称
-	private String subpath;
-
+	private Iterator<Entry<Integer, QA>> iter_single;
+	private Iterator<Entry<Integer, HashMap<Integer, QA>>> iter_multi;
+	private Iterator<Entry<Integer, QA>> iter_appl;
+	private Iterator<Entry<Integer, HashMap<Integer, QA>>> iter_choice;
+	private String subpath;// 剪切图片存放路径名称
 	public List<TableCell> tableCellList = new ArrayList<TableCell>();
+	
+		
 
-	public HashMap<Integer, QA> qaPair = new HashMap<Integer, QA>();
+	
+	public TableCell tableCell;// 每个cell包括左上顶点x，左上顶点y,宽度,高度
+	String msg = "The answer box number maybe wrong";// 分块为空的异常信息
 
-	public TableCell tableCell;
+	public String run(Test test, String srcpath,String type,int multi_num,String layout)
+			throws IOException, ArrayIndexOutOfBoundsException, IllegalArgumentException, NotPartitionException, TesseractException {
+		// 如果文件不是jpg或者png后缀则直接报错
+		String prefix = srcpath.substring(srcpath.lastIndexOf(".") + 1);
+		if (!"jpg".equals(prefix) && !"png".equals(prefix)) {
+			throw new IllegalArgumentException();
+		}
+		
+		String s = test.startOCR(srcpath);
 
-	/**
-	 * 主方法
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
+		// 第二步.read XML
+		test.readXML(s);
 
-		// 第一步.start OCR
-		Test test = new Test();
-		test.run(test);
+		// 第三步.把list里面的cell匹配起来
+		// 情况1：是填空1对1
+		if (SINGLE_COMPLETION.equals(type)) {
+			singleCompletion = new SingleCompletion(SINGLE_COMPLETION);
+			HashMap<Integer, QA> qApair = singleCompletion.match(tableCellList);
 
-	}
-
-	public HashMap<Integer, QA>  run(Test test) {
-		try {
-			String s = test.startOCR();
-
-			// 第二步.read XML
-			test.readXML(s);
-
-			// 第三步.把list里面的cell匹配起来
-			HashMap<Integer, QA> qApair = test.match(tableCellList);
+			if (qApair.entrySet().isEmpty()) {
+				throw new NotPartitionException(msg);
+			}
 			// 第四步.把每个tablecell切割成一个图片
 
-			Iterator<Entry<Integer, QA>> iter = qApair.entrySet().iterator();
+			iter_single = qApair.entrySet().iterator();
+		}
+		// 情况2：是填空一对多
+		if (MULTI_COMPLETION.equals(type)) {
+			multipleCompletion = new MultipleCompletion(MULTI_COMPLETION,multi_num,layout);
+			HashMap<Integer, HashMap<Integer, QA>> multi_qApair = multipleCompletion.match(tableCellList);
+
+			if (multi_qApair.entrySet().isEmpty()) {
+				throw new NotPartitionException(msg);
+			}
+			// 第四步.把每个tablecell切割成一个图片
+
+			iter_multi = multi_qApair.entrySet().iterator();
+		}
+		if(APPLICATION.equals(type)){
+			application = new ApplicationQestion(APPLICATION);
+			HashMap<Integer, QA> qaPair_appl = application.match(tableCellList);
+			if (qaPair_appl.entrySet().isEmpty()) {
+				throw new NotPartitionException(msg);
+			}
+			// 第四步.把每个tablecell切割成一个图片
+
+			iter_appl = qaPair_appl.entrySet().iterator();
 			
-			//把目录存成文件
-			//FileInputStream 
-			while (iter.hasNext()) {
-				Entry entry = (Entry) iter.next();
-				int key = (Integer) entry.getKey();
-				String questionImgName = key + "-question";
-				String answerboxImgName = key + "-answerbox";
-				QA qa = (QA) entry.getValue();
-				TableCell question = qa.getQuestion();
-				TableCell answerbox = qa.getAnswerbox();
-				test.cutTableCell(questionImgName, question);
-				test.cutTableCell(answerboxImgName, answerbox);
-				//设置QA list的名字
-				question.setName(questionImgName);
-				answerbox.setName(answerboxImgName);
-				
-				
-				System.out.println("第"+key+"个题目");
-				System.out.println("题目图片名："+questionImgName);
-				System.out.println("答题框图片名："+answerboxImgName);
-
-			}
-			return qApair;
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
-		return qaPair;
+		// 情况2：是选择
+		if (CHOICE.equals(type)) {
+			multi_num +=1;//输入为5个选择，实际上answerbox是6个
+			choice = new Choice(CHOICE,multi_num);
+			HashMap<Integer, HashMap<Integer, QA>> choice_qApair = choice.match(tableCellList);
+
+			if (choice_qApair.entrySet().isEmpty()) {
+				throw new NotPartitionException(msg);
+			}
+					// 第四步.把每个tablecell切割成一个图片
+
+			iter_choice = choice_qApair.entrySet().iterator();
+		}
+
+		// 第五步 创建图片的文件夹
+		String dirName[] = srcpath.split("\\.");
+		File dirfile = new File(dirName[0]);
+		// 如果文件夹不存在则创建
+		if (!dirfile.exists() && !dirfile.isDirectory()) {
+			System.out.println("//不存在");
+			// 创建该图片的目录
+			dirfile.mkdir();
+
+		}
+
+		// 第六步 创建index.txt并写入目录
+		File indexFile = new File(dirName[0] + "//" + "index.txt");
+
+		// if file doesnt exists, then create it
+		if (!indexFile.exists()) {
+			indexFile.createNewFile();
+		}
+
+		// true = append file
+		FileOutputStream fos = new FileOutputStream(indexFile);
+		OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+		BufferedWriter bufferWritter = new BufferedWriter(osw);
+		List<String> files = new ArrayList<String>();
+		// 第七步：把目录存成文件
+		// 情况1：填空1对1
+		if (SINGLE_COMPLETION.equals(type)) {
+			files=singleCompletion.saveIndexAndFile(iter_single, bufferWritter, test, srcpath, dirName[0]);
+		}
+		// 情况2：填空1对多
+		if (MULTI_COMPLETION.equals(type)) {
+			files=multipleCompletion.saveIndexAndFile_multi(iter_multi, bufferWritter, multipleCompletion.getMulti_num(), test, srcpath, dirName[0]);
+		}
+		if(APPLICATION.equals(type)){
+			files=application.saveIndexAndFile_appl(iter_appl, bufferWritter, test, srcpath, dirName[0]);
+		}
+		if(CHOICE.equals(type)){
+			files=choice.saveIndexAndFile_choice(iter_choice, bufferWritter, choice.getMulti_num(), test, srcpath, dirName[0]);
+			
+		}
+		
+		
+		TesseractOCRSample tesseract = new TesseractOCRSample();
+		tesseract.runTesseract(dirName[0],files,bufferWritter);
+
+		return indexFile.getAbsolutePath();
 
 	}
 
-	/**
-	 * 从两个维度来判断这两个answerbox是不是匹配的
-	 * 
-	 * @return
-	 * @throws Exception
-	 */
-	private HashMap<Integer, QA> match(List<TableCell> tableCellList) throws Exception {
-		if (tableCellList.size() == 0) {
-			Logger.getLogger("tablelist为空");
-			throw new Exception();
-
-		}
-
-		for (int i = 0; i < tableCellList.size(); i += 2) {
-			QA qa = new QA();
-			TableCell tb1 = tableCellList.get(i);
-			TableCell tb2 = tableCellList.get(i + 1);
-			if (tb1.getY() <= tb2.getY() && tb1.getY() + tb1.getHeight() >= tb2.getY() + tb2.getHeight()) {
-
-				qa.setQuestion(tb1);
-				qa.setAnswerbox(tb2);
-			} else if (tb2.getY() <= tb1.getY() && tb2.getY() + tb2.getHeight() >= tb1.getY() + tb1.getHeight()) {
-
-				qa.setQuestion(tb2);
-				qa.setAnswerbox(tb1);
-			}
-			qaPair.put((i + 1) / 2 + 1, qa);
-		}
-
-		return qaPair;
-	}
+	
 
 	/**
 	 * start OCR
 	 */
-	public String startOCR() {
+	public String startOCR(String srcpath) {
 
 		Ocr.setUp(); // one time setup
 		Ocr ocr = new Ocr(); // create a new OCR engine
-		ocr.startEngine("eng", Ocr.SPEED_FASTEST); // English
+		ocr.startEngine("eng", Ocr.SPEED_FASTEST); // English		
 		String s = ocr.recognize(new File[] { new File(srcpath) }, Ocr.RECOGNIZE_TYPE_ALL, Ocr.OUTPUT_FORMAT_XML);
 		// ocr more images here ...
 		ocr.stopEngine();
@@ -158,72 +217,74 @@ public class Test {
 		// i start from 1 because the spit strategy,the array[0] is a useless
 		// one
 		for (int i = 1; i < arr.length; i++) {
+			// 排除了cell嵌套的情况
+			if (!arr[i].contains(except)) {
+				tableCell = new TableCell();
+				System.out.println("Result " + i + ":" + arr[i]);
 
-			tableCell = new TableCell();
-			System.out.println("Result " + i + ":" + arr[i]);
-			// add some function to delete the empty item in the array
-
-			// iterate the array,for each non-empty item, split x to the
-			// tablecell
-			if (arr[i].contains("x") && arr[i].contains("y")) {
-				String Xarray[] = arr[i].split(gap_x);
-				for (int j = 0; j < Xarray.length; j++) {
-					if (!Xarray[j].contains("=")) {
-						tableCell.setX(Integer.parseInt(Xarray[j]));
-						break;
+				// iterate the array,for each non-empty item, split x to the
+				// tablecell
+				if (arr[i].contains("x") && arr[i].contains("y")) {
+					String Xarray[] = arr[i].split(gap_x);
+					for (int j = 0; j < Xarray.length; j++) {
+						if (!Xarray[j].contains("=")) {
+							tableCell.setX(Integer.parseInt(Xarray[j]));
+							break;
+						}
 					}
+					System.out.println("tabelcell.x:" + tableCell.getX());
+
 				}
-				System.out.println("tabelcell.x:" + tableCell.getX());
+				// iterate the array,for each non-empty item, split y to the
+				// tablecell
+				if (arr[i].contains("x") && arr[i].contains("y")) {
+					String Yarray[] = arr[i].split(gap_y);
+					for (int j = 0; j < Yarray.length; j++) {
+						if (!Yarray[j].contains("=")) {
+							tableCell.setY(Integer.parseInt(Yarray[j]));
+							break;
+						}
+					}
+					System.out.println("tabelcell.y:" + tableCell.getY());
+				}
+				// split width to the tablecell
+				if (arr[i].contains("x") && arr[i].contains("y")) {
+					String widthArray[] = arr[i].split(gap_width);
+					for (int j = 0; j < widthArray.length; j++) {
+						if (!widthArray[j].contains("=")) {
+							tableCell.setWidth(Integer.parseInt(widthArray[j]));
+							break;
+						}
+					}
+					System.out.println("tabelcell.width:" + tableCell.getWidth());
+				}
+
+				// split height to the tablecell
+				if (arr[i].contains("x") && arr[i].contains("y")) {
+					String heightArray[] = arr[i].split(gap_height);
+					for (int j = 0; j < heightArray.length; j++) {
+						if (!heightArray[j].contains("=")) {
+							tableCell.setHeight(Integer.parseInt(heightArray[j]));
+							break;
+						}
+					}
+					System.out.println("tabelcell.height:" + tableCell.getHeight());
+
+					// for each array[i] there will be store in a tablecell[i]
+					if (tableCell.getX() != 0 && tableCell.getY() != 0 && tableCell.getWidth() != 0
+							&& tableCell.getHeight() != 0) {
+						tableCellList.add(tableCell);
+					}
+					System.out.println("*******************************************************");
+				}
 
 			}
-			// iterate the array,for each non-empty item, split y to the
-			// tablecell
-			if (arr[i].contains("x") && arr[i].contains("y")) {
-				String Yarray[] = arr[i].split(gap_y);
-				for (int j = 0; j < Yarray.length; j++) {
-					if (!Yarray[j].contains("=")) {
-						tableCell.setY(Integer.parseInt(Yarray[j]));
-						break;
-					}
-				}
-				System.out.println("tabelcell.y:" + tableCell.getY());
-			}
-			// split width to the tablecell
-			if (arr[i].contains("x") && arr[i].contains("y")) {
-				String widthArray[] = arr[i].split(gap_width);
-				for (int j = 0; j < widthArray.length; j++) {
-					if (!widthArray[j].contains("=")) {
-						tableCell.setWidth(Integer.parseInt(widthArray[j]));
-						break;
-					}
-				}
-				System.out.println("tabelcell.width:" + tableCell.getWidth());
-			}
-
-			// split height to the tablecell
-			if (arr[i].contains("x") && arr[i].contains("y")) {
-				String heightArray[] = arr[i].split(gap_height);
-				for (int j = 0; j < heightArray.length; j++) {
-					if (!heightArray[j].contains("=")) {
-						tableCell.setHeight(Integer.parseInt(heightArray[j]));
-						break;
-					}
-				}
-				System.out.println("tabelcell.height:" + tableCell.getHeight());
-
-				// for each array[i] there will be store in a tablecell[i]
-				if (tableCell.getX() != 0 && tableCell.getY() != 0 && tableCell.getWidth() != 0
-						&& tableCell.getHeight() != 0) {
-					tableCellList.add(tableCell);
-				}
-				System.out.println("*******************************************************");
-			}
-
 		}
-
 	}
+	
+	
 
-	public void cutTableCell(String i, TableCell tableCell) throws IOException {
+	public void cutTableCell(String i, TableCell tableCell, String dirName, String srcpath) throws IOException {
 		FileInputStream is = null;
 		ImageInputStream iis = null;
 		try {
@@ -255,9 +316,11 @@ public class Test {
 			 * 图片裁剪区域。Rectangle 指定了坐标空间中的一个区域，通过 Rectangle 对象
 			 * 的左上顶点的坐标(x，y)、宽度和高度可以定义这个区域。
 			 */
-			Rectangle rect = new Rectangle(tableCell.getX(), tableCell.getY(), tableCell.getWidth(),
+			int x= tableCell.getX()+3;
+			int y = tableCell.getY()+3;
+			Rectangle rect = new Rectangle(x, y, tableCell.getWidth(),
 					tableCell.getHeight());
-			
+
 			// 提供一个 BufferedImage，将其用作解码像素数据的目标。
 			param.setSourceRegion(rect);
 			/*
@@ -266,7 +329,8 @@ public class Test {
 			 */
 			BufferedImage bi = reader.read(0, param);
 			// 保存新图片
-			subpath = i + ".jpg";
+
+			subpath = dirName + "//" + i + ".jpg";
 			ImageIO.write(bi, suffix, new File(subpath));
 
 			// 把保存的照片加入到
@@ -277,5 +341,55 @@ public class Test {
 				iis.close();
 		}
 	}
+	public void cutTableCell_question(String i, TableCell tableCell, String dirName, String srcpath,List<TableCell> answerList) throws IOException {
+//		FileInputStream is = null;
+//		ImageInputStream iis = null;
+//		try {
+			// 读取图片文件
+
+			//is = new FileInputStream(srcpath);
+			// 图片后缀
+			String suffix = srcpath.substring(srcpath.lastIndexOf(".") + 1);
+			
+			File _file = new File(srcpath); 
+			Image src = javax.imageio.ImageIO.read(_file); // 构造Image对象  
+			int question_width = src.getWidth(null); // 得到源图宽  
+			int question_height = src.getHeight(null); // 得到源图长  
+			BufferedImage image = new BufferedImage(question_width, question_height,  
+				     BufferedImage.TYPE_INT_RGB);
+			Graphics2D graphics = image.createGraphics();//获得一个图片类
+			graphics.drawImage(src, 0, 0, question_width, question_height, null); // 绘制原图  
+			//在原图上加框框
+			for(int j=0;j<answerList.size();j++){
+				int x = answerList.get(j).getX();
+				int y =answerList.get(j).getY();
+				int width = answerList.get(j).getWidth()+10;
+				int height = answerList.get(j).getHeight()+10;
+				//实例化Pen类
+				graphics.setColor(Color.black);				
+				//画边框
+				BasicStroke wideStroke = new BasicStroke(2f);  
+				graphics.setStroke(wideStroke);
+				graphics.drawRect(x, y, width, height);
+				graphics.setColor(Color.white);
+				graphics.fillRect(x, y, width, height);
+			}
+			image = image.getSubimage(tableCell.getX(), tableCell.getY(), tableCell.getWidth(),
+					tableCell.getHeight());
+						
+			subpath = dirName + "//" + i + ".jpg";
+			ImageIO.write(image, suffix, new File(subpath));
+
+			// 把保存的照片加入到
+//		} finally {
+//			if (is != null)
+//				is.close();
+//			if (iis != null)
+//				iis.close();
+//		}
+	}
+	
+	
+	
 
 }
